@@ -1,0 +1,15 @@
+{
+  "name": "@travelhelm/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Travel Helm — code isomorphe partagé (format FCFA, états métier, rôles).",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./format": "./src/format.ts",
+    "./status": "./src/status.ts",
+    "./roles": "./src/roles.ts"
+  }
+}

@@ -1,0 +1,58 @@
+# ————— dépendances —————
+node_modules/
+.pnp
+.pnp.*
+
+# ————— next.js —————
+.next/
+out/
+apps/web/.next/
+apps/web/next-env.d.ts
+*.tsbuildinfo
+
+# ————— builds —————
+apps/api/dist/
+build/
+dist/
+
+# ————— tests —————
+coverage/
+
+# ————— env (local) —————
+.env
+.env.local
+.env*.local
+packages/db/.env
+apps/api/.env
+apps/web/.env.local
+tests/.env
+
+# ————— bases locales —————
+db/
+*.db
+*.db-journal
+apps/api/test.db
+tests/*.db
+
+# ————— divers —————
+.DS_Store
+*.pem
+*.log
+dev.log
+server.log
+
+# ————— vercel —————
+.vercel/
+
+# ————— infra sandbox (non poussés sur GitHub) —————
+.zscripts/
+Caddyfile
+mini-services/
+examples/
+upload/
+download/
+skills/
+worklog.md
+prompt/
+.claude/
+.z-ai-config/

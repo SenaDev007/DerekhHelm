@@ -1,0 +1,36 @@
+{
+  "name": "travelhelm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Travel Helm — SaaS de billetterie interurbaine multi-compagnies (Bénin). Monorepo : frontend Next.js + backend Hono + packages partagés.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "bun run --filter @travelhelm/api build && bun run --filter @travelhelm/web build",
+    "build:web": "bun run --filter @travelhelm/web build",
+    "build:api": "bun run --filter @travelhelm/api build",
+    "start": "node scripts/start.mjs",
+    "lint": "bun run --filter @travelhelm/web lint && bun run --filter @travelhelm/api lint",
+    "typecheck": "tsc -p apps/web --noEmit && tsc -p apps/api --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:push": "node packages/db/scripts/select-schema.mjs && prisma db push --schema=packages/db/prisma/schema.prisma --accept-data-loss",
+    "db:generate": "node packages/db/scripts/select-schema.mjs && prisma generate --schema=packages/db/prisma/schema.prisma",
+    "db:seed": "bun packages/db/seed.ts",
+    "db:reset": "bun scripts/db-reset.ts",
+    "schema:check": "node packages/db/scripts/check-schemas.mjs",
+    "postinstall": "node packages/db/scripts/select-schema.mjs && prisma generate --schema=packages/db/prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "prisma": "^6.11.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
