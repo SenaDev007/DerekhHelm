@@ -1,0 +1,305 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+@custom-variant cockpit (&:is(.cockpit, .cockpit *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-helm-green: var(--helm-green);
+  --color-helm-amber: var(--helm-amber);
+  --color-helm-ink: var(--helm-ink);
+  --color-helm-sand: var(--helm-sand);
+}
+
+/* ————————————————————————————————
+   Travel Helm — thème « voyageur » (sable chaud, vert Bénin, ambre)
+   ———————————————————————————————— */
+:root {
+  --radius: 0.875rem;
+  --helm-green: #0b6e47;
+  --helm-amber: #d9932f;
+  --helm-ink: #221d16;
+  --helm-sand: #f7f2e7;
+
+  --background: #faf6ee;
+  --foreground: #221d16;
+  --card: #ffffff;
+  --card-foreground: #221d16;
+  --popover: #ffffff;
+  --popover-foreground: #221d16;
+  --primary: #0b6e47;
+  --primary-foreground: #f4f8f2;
+  --secondary: #efe8d8;
+  --secondary-foreground: #3a3122;
+  --muted: #f0eadb;
+  --muted-foreground: #6f6450;
+  --accent: #f3e7cf;
+  --accent-foreground: #5c4a1e;
+  --destructive: #bc3f2a;
+  --border: #e3dac6;
+  --input: #ddd3bc;
+  --ring: #0b6e47;
+  --chart-1: #0b6e47;
+  --chart-2: #d9932f;
+  --chart-3: #7a5c14;
+  --chart-4: #3e8f6b;
+  --chart-5: #bc3f2a;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #221d16;
+  --sidebar-primary: #0b6e47;
+  --sidebar-primary-foreground: #f4f8f2;
+  --sidebar-accent: #f3e7cf;
+  --sidebar-accent-foreground: #5c4a1e;
+  --sidebar-border: #e3dac6;
+  --sidebar-ring: #0b6e47;
+}
+
+.dark {
+  --background: #16130e;
+  --foreground: #ede7d9;
+  --card: #201c15;
+  --card-foreground: #ede7d9;
+  --popover: #262119;
+  --popover-foreground: #ede7d9;
+  --primary: #2fbf7f;
+  --primary-foreground: #0d1a13;
+  --secondary: #2a251c;
+  --secondary-foreground: #d8d0bd;
+  --muted: #262119;
+  --muted-foreground: #a39a83;
+  --accent: #2e2820;
+  --accent-foreground: #e8c987;
+  --destructive: #e06248;
+  --border: #ffffff14;
+  --input: #ffffff1f;
+  --ring: #2fbf7f;
+  --chart-1: #2fbf7f;
+  --chart-2: #e8a33d;
+  --chart-3: #b98c2f;
+  --chart-4: #1d7d5b;
+  --chart-5: #e06248;
+  --sidebar: #1a1611;
+  --sidebar-foreground: #ede7d9;
+  --sidebar-primary: #2fbf7f;
+  --sidebar-primary-foreground: #0d1a13;
+  --sidebar-accent: #262119;
+  --sidebar-accent-foreground: #e8c987;
+  --sidebar-border: #ffffff14;
+  --sidebar-ring: #2fbf7f;
+}
+
+/* ————————————————————————————————
+   Thème « cockpit » — back-office compagnies (sombre, chaud, instruments)
+   S'applique en scoping une classe .cockpit : les tokens shadcn suivent.
+   ———————————————————————————————— */
+.cockpit {
+  --helm-green: #2fbf7f;
+  --helm-amber: #e8a33d;
+  --helm-ink: #12100b;
+  --helm-sand: #262119;
+
+  --background: #14110c;
+  --foreground: #ece5d3;
+  --card: #1e1a13;
+  --card-foreground: #ece5d3;
+  --popover: #241f16;
+  --popover-foreground: #ece5d3;
+  --primary: #2fbf7f;
+  --primary-foreground: #0d1a13;
+  --secondary: #28231a;
+  --secondary-foreground: #cfc7b2;
+  --muted: #241f16;
+  --muted-foreground: #9d947c;
+  --accent: #2c261b;
+  --accent-foreground: #e8c987;
+  --destructive: #e06248;
+  --border: #ffffff12;
+  --input: #ffffff1c;
+  --ring: #2fbf7f;
+  --chart-1: #2fbf7f;
+  --chart-2: #e8a33d;
+  --chart-3: #8a6a1e;
+  --chart-4: #1d8a63;
+  --chart-5: #e06248;
+  --sidebar: #18140e;
+  --sidebar-foreground: #ece5d3;
+  --sidebar-primary: #2fbf7f;
+  --sidebar-primary-foreground: #0d1a13;
+  --sidebar-accent: #241f16;
+  --sidebar-accent-foreground: #e8c987;
+  --sidebar-border: #ffffff10;
+  --sidebar-ring: #2fbf7f;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01" on, "cv05" on;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--helm-amber) 30%, transparent);
+  }
+}
+
+/* —————— Utilitaires signature Travel Helm —————— */
+
+/* Motif « wax » discret — bande décorative */
+.helm-wax {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='14'%3E%3Cpath d='M0 14 L11 0 L22 14 Z' fill='%23d9932f' fill-opacity='0.5'/%3E%3Cpath d='M22 14 L34 2 L45 14 Z' fill='%230b6e47' fill-opacity='0.45'/%3E%3Cpath d='M45 14 L50 5 L56 14 Z' fill='%23bc3f2a' fill-opacity='0.4'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 56px 14px;
+}
+
+/* Halo héro */
+.helm-hero-glow {
+  background:
+    radial-gradient(900px 420px at 12% -8%, color-mix(in srgb, var(--helm-amber) 22%, transparent), transparent 60%),
+    radial-gradient(1100px 520px at 92% 8%, color-mix(in srgb, var(--helm-green) 20%, transparent), transparent 62%),
+    radial-gradient(600px 300px at 55% 110%, color-mix(in srgb, var(--helm-amber) 10%, transparent), transparent 55%);
+}
+
+.cockpit .helm-hero-glow {
+  background:
+    radial-gradient(800px 400px at 8% -10%, color-mix(in srgb, #2fbf7f 12%, transparent), transparent 60%),
+    radial-gradient(1000px 500px at 95% 0%, color-mix(in srgb, #e8a33d 9%, transparent), transparent 60%);
+}
+
+/* Grain subtil */
+.helm-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Chiffres tabulaires pour horaires / montants */
+.num {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Ligne pointillée style billet */
+.ticket-perf {
+  position: relative;
+}
+.ticket-perf::before,
+.ticket-perf::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  left: -10px;
+  top: var(--perf-y, 50%);
+  transform: translateY(-50%);
+}
+.ticket-perf::after {
+  left: auto;
+  right: -10px;
+}
+
+/* Sièges — transitions */
+.seat-btn {
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease, background 0.14s ease;
+}
+.seat-btn:not(:disabled):hover {
+  transform: translateY(-2px) scale(1.04);
+}
+.seat-btn:not(:disabled):active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Tableau des départs — style « tableau d'affichage » */
+.board-row {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* Scrollbars fines */
+.thin-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  border-radius: 8px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Animation du ping réseau (indicateur de synchro) */
+@keyframes sync-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.82); }
+}
+.sync-dot {
+  animation: sync-pulse 2.2s ease-in-out infinite;
+}
+
+/* Impression du billet */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-ticket, .print-ticket * {
+    visibility: visible;
+  }
+  .print-ticket {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 24px;
+    background: white;
+    color: #221d16;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
