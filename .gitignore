@@ -28,7 +28,11 @@ apps/web/.env.local
 tests/.env
 
 # ————— bases locales —————
-db/
+# /db/ (ancré à la racine) : dossier SQLite local UNIQUEMENT.
+# ⚠ Ne jamais mettre « db/ » seul : ce motif ignore TOUT dossier nommé db/,
+# y compris packages/db/ — c'est ce qui a retiré @travelhelm/db du repo et
+# cassé le build Vercel (bun install : « Workspace dependency not found »).
+/db/
 *.db
 *.db-journal
 apps/api/test.db

@@ -1,0 +1,316 @@
+// Travel Helm — Schéma multi-compagnies (SaaS billetterie interurbaine Bénin)
+// Invariant central : SeatOccupancy @@unique([departureId, seatId])
+// → une place d'un départ ne peut exister qu'une seule fois en HOLD ou CONFIRMED.
+//
+// Fichier « variante SQLite » — le fichier actif prisma/schema.prisma est
+// généré par scripts/select-schema.mjs (SQLite en dev, PostgreSQL en prod).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  tagline      String?
+  brandColor   String   // hex — identité visuelle du tenant
+  brandAccent  String?
+  description  String?
+  holdMinutes  Int      @default(7) // durée de rétention configurable (TH-INV-02)
+  contactPhone String?
+  contactEmail String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stations   Station[]
+  routes     Route[]
+  vehicles   Vehicle[]
+  departures Departure[]
+  bookings   Booking[]
+  staffUsers StaffUser[]
+  auditLogs  AuditLog[]
+}
+
+// ——— Identité & accès (TH-ADM-02/03) ———
+model StaffUser {
+  id           String    @id @default(cuid())
+  companyId    String?   // null = compte Support Travel Helm (transverse)
+  email        String    @unique
+  fullName     String
+  phone        String?
+  role         String // GERANT | MANAGER | GUICHETIER | FINANCE | REPARTITEUR | CONTROLEUR | SUPPORT
+  passwordHash String
+  mfaEnabled   Boolean   @default(false) // MFA exigée pour les comptes privilégiés (production)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  company Company? @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+model Station {
+  id        String  @id @default(cuid())
+  companyId String
+  city      String // Cotonou, Parakou…
+  name      String // Gare de Missèbo
+  kind      String  @default("GARE") // GARE | ARRET
+  isPrimary Boolean @default(false)
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+}
+
+model Route {
+  id         String  @id @default(cuid())
+  companyId  String
+  code       String // CTN-PKP
+  originCity String
+  destCity   String
+  label      String // Corridor Cotonou → Parakou
+  distanceKm Int
+  durationMin Int
+  boardingPoint String // point d'embarquement principal
+  dropOffPoint  String?
+  company    Company   @relation(fields: [companyId], references: [id])
+  stops      Stop[]
+  departures Departure[]
+
+  @@unique([companyId, code])
+}
+
+model Stop {
+  id        String @id @default(cuid())
+  routeId   String
+  city      String
+  station   String
+  seq       Int
+  offsetMin Int // minutes après l'origine
+  route     Route  @relation(fields: [routeId], references: [id])
+
+  @@index([routeId])
+}
+
+model Vehicle {
+  id                  String  @id @default(cuid())
+  companyId           String
+  label               String // Autocar Zéphyr
+  model               String // Yutong ZK6122
+  plate               String
+  seatLayout          String  @default("2-3") // 2-2 | 2-3
+  capacity            Int
+  seatSelectionEnabled Boolean @default(false) // activé après vérification du plan réel (TH-INV-04)
+  amenities           String? // CSV : climatisation,prises USB,wifi
+  company             Company  @relation(fields: [companyId], references: [id])
+  seats               Seat[]
+  departures          Departure[]
+
+  @@unique([companyId, plate])
+}
+
+model Seat {
+  id        String  @id @default(cuid())
+  vehicleId String
+  code      String // 7C
+  row       Int
+  col       Int // 0..4 (2-2 : 0..3)
+  kind      String  @default("STANDARD") // STANDARD | VIP | ACCESSIBLE | SERVICE
+  window    Boolean @default(false)
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+  occupancies SeatOccupancy[]
+
+  @@unique([vehicleId, code])
+  @@index([vehicleId])
+}
+
+model Departure {
+  id                  String   @id @default(cuid())
+  companyId           String
+  routeId             String
+  vehicleId           String?
+  departsAt           DateTime
+  durationMin         Int
+  status              String   @default("BROUILLON")
+  // BROUILLON → PUBLIE → EMBARQUEMENT → EN_COURS → TERMINE (+ RETARDE, VEHICULE_REMPLACE, ANNULE)
+  basePrice           Int // FCFA
+  vipSurcharge        Int      @default(0)
+  seatSelectionEnabled Boolean @default(false)
+  capacity            Int // capacité vendable (si pas de sélection par siège)
+  boardingCutoffMin   Int      @default(30) // heure limite de présentation (TH-OPS)
+  reason              String? // motif changement/annulation
+  delayMin            Int?
+  checkInNote         String?
+  publishedAt         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  company   Company   @relation(fields: [companyId], references: [id])
+  route     Route     @relation(fields: [routeId], references: [id])
+  vehicle   Vehicle?  @relation(fields: [vehicleId], references: [id])
+  occupancies SeatOccupancy[]
+  bookings  Booking[]
+  stateLogs DepartureStateLog[]
+
+  @@index([companyId, departsAt])
+  @@index([routeId, departsAt])
+}
+
+// ——— Inventaire : la clé de voûte ———
+model SeatOccupancy {
+  id          String    @id @default(cuid())
+  departureId String
+  seatId      String?   // null = vente par capacité (TH-INV-05)
+  holdToken   String?   // regroupe les sièges d'une même rétention
+  status      String    // HOLD | CONFIRMED
+  expiresAt   DateTime? // null si confirmé
+  bookingId   String?
+  channel     String    @default("WEB") // WEB | GUICHET | REVENDEUR
+  createdAt   DateTime  @default(now())
+
+  departure Departure @relation(fields: [departureId], references: [id])
+  seat      Seat?     @relation(fields: [seatId], references: [id])
+  booking   Booking?  @relation(fields: [bookingId], references: [id])
+
+  @@unique([departureId, seatId]) // ← invariant "une place vendue une seule fois"
+  @@index([departureId])
+  @@index([holdToken])
+}
+
+model Booking {
+  id            String    @id @default(cuid())
+  reference     String    @unique // TH-XXXXXX
+  companyId     String
+  departureId   String
+  channel       String    @default("WEB")
+  passengerName String
+  passengerPhone String
+  passengerEmail String?
+  seatCount     Int
+  seatCodes     String? // CSV des sièges confirmés
+  amount        Int // montant total trajet
+  serviceFee    Int       @default(0)
+  totalAmount   Int
+  status        String    @default("EN_ATTENTE_PAIEMENT")
+  // EN_ATTENTE_PAIEMENT → CONFIRMEE → PRESENTEE → EMBARQUEE → TERMINEE
+  // branches : EXPIREE | ANNULEE | REMBOURSEMENT_EN_COURS | REMBOURSEE | NO_SHOW | A_RECONCILIER
+  paymentMethod String    @default("MTN_MOMO") // MTN_MOMO | MOOV_MONEY | CASH | AU_GUICHET
+  agentName     String?   // canal guichet
+  holdToken     String?
+  note          String?
+  createdAt     DateTime  @default(now())
+  confirmedAt   DateTime?
+  canceledAt    DateTime?
+
+  company    Company         @relation(fields: [companyId], references: [id])
+  departure  Departure       @relation(fields: [departureId], references: [id])
+  payment    Payment?
+  tickets    Ticket[]         // historique : le remplacement ajoute une ligne, l'ancienne passe à REMPLACE
+  occupancies SeatOccupancy[]
+
+  @@index([companyId, createdAt])
+  @@index([departureId])
+  @@index([passengerPhone])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  provider    String // MTN_MOMO | MOOV_MONEY | CASH
+  providerRef String?  @unique // référence fournisseur
+  amount      Int
+  feeAmount   Int      @default(0) // frais supportés par la compagnie
+  status      String   @default("INITIE")
+  // INITIE → EN_ATTENTE → SUCCES | ECHEC | EXPIRE | INCONNU → REMBOURSE
+  failureReason String?
+  createdAt   DateTime @default(now())
+  completedAt  DateTime?
+  refundedAt   DateTime?
+
+  booking Booking        @relation(fields: [bookingId], references: [id])
+  events  PaymentEvent[]
+
+  @@index([status])
+}
+
+model PaymentEvent {
+  id         String   @id @default(cuid())
+  paymentId  String
+  eventToken String   @unique // idempotence des callbacks (TH-PAY-03)
+  type       String // CALLBACK | STATUS_QUERY | RECONCILIATION | REFUND
+  outcome    String // SUCCES | ECHEC | EXPIRE | INCONNU | REMBOURSE
+  payload    String? // JSON
+  processed  Boolean  @default(false)
+  ignoredReason String? // DUPLICATE…
+  receivedAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@index([paymentId])
+}
+
+model Ticket {
+  id         String    @id @default(cuid())
+  bookingId  String // un remplacement crée une nouvelle ligne ; l'ancienne passe à REMPLACE
+  code       String    @unique // code opaque public : THQ-XXXX-XXXX
+  qrPayload  String    // jeton signé (HMAC)
+  status     String    @default("VALIDE")
+  // VALIDE | UTILISE | ANNULE | REMPLACE | EXAMEN_MANUEL
+  scannedAt  DateTime?
+  scannedBy  String?
+  boardingGate String? // quai
+  createdAt  DateTime  @default(now())
+  booking    Booking   @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+}
+
+model DepartureStateLog {
+  id          String   @id @default(cuid())
+  departureId String
+  fromStatus  String?
+  toStatus    String
+  actor       String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  departure Departure @relation(fields: [departureId], references: [id])
+
+  @@index([departureId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  companyId String?  // null = action transverse (support Travel Helm)
+  actor     String
+  action    String // HOLD_CREATED, BOOKING_CONFIRMED, DEPARTURE_PUBLISHED, STATION_CREATED…
+  entity    String
+  entityId  String
+  detail    String? // JSON court
+  createdAt DateTime @default(now())
+
+  company Company? @relation(fields: [companyId], references: [id])
+
+  @@index([companyId, createdAt])
+}
+
+model NotificationLog {
+  id          String   @id @default(cuid())
+  companyId   String
+  departureId String?
+  bookingId   String?
+  channel     String // SMS | EMAIL | WHATSAPP
+  template    String // CONFIRMATION_VENTE, AVIS_RETARD…
+  recipient   String
+  status      String // ENVOYE | ECHEC | EN_ATTENTE
+  sentAt      DateTime @default(now())
+
+  @@index([companyId, sentAt])
+}

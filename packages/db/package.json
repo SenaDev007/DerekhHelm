@@ -1,0 +1,25 @@
+{
+  "name": "@travelhelm/db",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Travel Helm — schéma Prisma + client + seed (multi-tenant, invariant d'unicité des sièges).",
+  "type": "module",
+  "main": "./src/client.ts",
+  "types": "./src/client.ts",
+  "exports": {
+    ".": "./src/client.ts"
+  },
+  "scripts": {
+    "postinstall": "node scripts/select-schema.mjs && prisma generate --schema=prisma/schema.prisma",
+    "db:push": "prisma db push --schema=prisma/schema.prisma --accept-data-loss",
+    "db:generate": "node scripts/select-schema.mjs && prisma generate --schema=prisma/schema.prisma",
+    "db:migrate-deploy:pg": "prisma migrate deploy --schema=prisma/schema.postgres.prisma",
+    "seed": "bun seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.11.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.11.1"
+  }
+}
