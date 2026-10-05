@@ -68,13 +68,20 @@ export function AgencyView() {
     toast.info("Session close", { description: "Toutes les vues compagnie sont protégées par connexion." });
   }
 
+  // Rôle changé / session restaurée : atterrir sur le premier onglet autorisé
+  const role = (session?.role ?? "GERANT") as Role;
+  const allowed = ROLE_TABS[role] ?? ["dashboard"];
+  const visibleTabs = TABS.filter((t) => allowed.includes(t.key));
+  useEffect(() => {
+    if (session && visibleTabs.length > 0 && !visibleTabs.some((t) => t.key === agencyTab)) {
+      setAgencyTab(visibleTabs[0].key);
+    }
+  }, [session?.id, session?.role, agencyTab, setAgencyTab, visibleTabs]);
+
   if (!session) {
     return <Login onLoggedIn={(u) => setSession(u)} onBack={() => setMode("travel")} />;
   }
 
-  const role = session.role as Role;
-  const allowed = ROLE_TABS[role] ?? ["dashboard"];
-  const visibleTabs = TABS.filter((t) => allowed.includes(t.key));
   const company = session.company;
 
   return (
