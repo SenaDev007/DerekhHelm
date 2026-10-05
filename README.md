@@ -122,7 +122,19 @@ bun run db:reset    # régénère la base de démo complète
 
 ## Déploiement sur Vercel
 
-Le monorepo se déploie en **deux projets Vercel** (backend séparé du frontend) :
+Le monorepo se déploie en **deux projets Vercel** (backend séparé du frontend).
+
+> ⚠️ **Root Directory obligatoire** : chaque projet Vercel doit pointer sur un sous-dossier
+> (`apps/api` ou `apps/web`), jamais sur la racine du repo — la racine est un espace de
+> travail bun (workspaces), pas une application déployable. Un projet Vercel configuré
+> sur la racine passerait l'installation mais ne servirait rien.
+>
+> ℹ️ L'installation (`bun install`) installé toujours **tout le monorepo** depuis la racine,
+> même quand le Root Directory est un sous-dossier (bun remonte au workspace root) ; le
+> `postinstall` racine génère le client Prisma automatiquement — rien à configurer.
+>
+> ℹ️ Le warning Vercel `Detected "engines": { "node": ">=20" }` est bénin (simple
+> information de montée de version majeure Node).
 
 ### 1. Projet API (`apps/api`)
 
@@ -165,7 +177,22 @@ Le frontend proxifie `/api/*` vers `API_ORIGIN` (route runtime
 
 ### Ordre : déployer l'API d'abord, renseigner `API_ORIGIN` ensuite.
 
-> Alternatives d'hébergement : `apps/api` tourne aussi comme serveur Node standard
+### Dépannage : `error: Workspace dependency "@travelhelm/db" not found`
+
+Ce message (bun install, Vercel ou CI) signifie que le dossier `packages/db`
+n'est pas présent dans le clone. Cause historique : le motif `.gitignore`
+`db/` (sans ancrage) ignorait **tout** dossier nommé `db/`, y compris
+`packages/db/`. Corrigé — le motif est désormais `/db/` (dossier SQLite local
+de la racine uniquement). **Ne jamais le réintroduire.** Vérifier si besoin :
+
+```bash
+git check-ignore -v packages/db/package.json   # ne doit rien retourner
+git ls-files packages/db                        # doit lister 8 fichiers
+```
+
+### Alternatives d'hébergement
+
+> `apps/api` tourne aussi comme serveur Node standard
 > (`bun run build:api && node apps/api/dist/server.js`) — le bundle embarque le runtime
 > Prisma (Railway, Fly.io, VPS…).
 
