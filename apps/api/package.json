@@ -1,0 +1,25 @@
+{
+  "name": "@travelhelm/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Travel Helm — backend REST versionné (Hono) : inventaire, réservations, paiements, billets, back-office multi-tenant.",
+  "type": "module",
+  "main": "./src/app.ts",
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "build": "bun build src/server.ts --target=node --external @prisma/client --external .prisma/client --outfile dist/server.js && node scripts/copy-prisma-runtime.mjs",
+    "start": "node dist/server.js",
+    "lint": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "hono": "^4.6.14",
+    "qrcode": "^1.5.4",
+    "@travelhelm/core": "workspace:*",
+    "@travelhelm/db": "workspace:*",
+    "@travelhelm/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6"
+  }
+}
