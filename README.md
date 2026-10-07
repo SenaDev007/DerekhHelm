@@ -122,28 +122,33 @@ bun run db:reset    # régénère la base de démo complète
 
 ## Déploiement sur Vercel
 
-Le monorepo se déploie en **deux projets Vercel** (backend séparé du frontend).
+Deux modes de déploiement sont supportés. Dans tous les cas :
 
-> ⚠️ **Root Directory obligatoire** : chaque projet Vercel doit pointer sur un sous-dossier
-> (`apps/api` ou `apps/web`), jamais sur la racine du repo — la racine est un espace de
-> travail bun (workspaces), pas une application déployable. Un projet Vercel configuré
-> sur la racine passerait l'installation mais ne servirait rien.
+> ⚠️ **Root Directory obligatoire** : le projet Vercel doit pointer sur un sous-dossier
+> (`apps/web` ou `apps/api`), jamais sur la racine du repo — la racine est un espace de
+> travail bun (workspaces), pas une application déployable. Un projet configuré sur la
+> racine échoue désormais **volontairement** avec un message explicite (voir
+> `scripts/build.mjs`) au lieu de l'erreur opaque `No Output Directory named "public"`.
 >
-> ℹ️ L'installation (`bun install`) installé toujours **tout le monorepo** depuis la racine,
-> même quand le Root Directory est un sous-dossier (bun remonte au workspace root) ; le
+> ℹ️ `bun install` installe toujours **tout le monorepo** depuis la racine, même quand
+> le Root Directory est un sous-dossier (bun remonte au workspace root) ; le
 > `postinstall` racine génère le client Prisma automatiquement — rien à configurer.
 >
 > ℹ️ Le warning Vercel `Detected "engines": { "node": ">=20" }` est bénin (simple
 > information de montée de version majeure Node).
 
-### 1. Projet API (`apps/api`)
+### Mode A — projet UNIQUE (recommandé pour démarrer)
+
+L'application Hono (`@travelhelm/api`) est montée **dans** le route handler Next.js
+(`src/app/api/[...path]/route.ts`, via `app.fetch`) : frontend + backend dans le
+**même déploiement**, sur une seule URL. Il suffit de **ne pas définir `API_ORIGIN`**.
 
 ```bash
-# Vercel → New Project → Importer le repo → Root Directory : apps/api
-# Framework : Other (détecté automatiquement via api/index.ts + vercel.json)
+# Vercel → New Project → Importer le repo → Root Directory : apps/web
+# (framework Next.js détecté automatiquement)
 ```
 
-Variables d'environnement :
+Variables d'environnement du projet :
 
 | Variable | Valeur |
 |---|---|
@@ -151,31 +156,34 @@ Variables d'environnement :
 | `HELM_QR_SECRET` | secret long aléatoire (signature des billets QR) |
 | `HELM_SESSION_SECRET` | secret long aléatoire (sessions signées) |
 | `HELM_DEMO` | `0` en production |
+| `API_ORIGIN` | *(ne pas définir — laisser vide active le mode unifié)* |
 
-Puis initialiser le schéma (une fois) :
+> 💡 **Neon** : utiliser l'URL de connexion **avec pooling** (l'hôte contient
+> `-pooler`) — les fonctions serverless ouvrent des connexions fréquentes.
+
+Puis initialiser le schéma (une fois, depuis une machine avec le repo) :
 
 ```bash
 DATABASE_URL="postgresql://…" \
   bunx prisma db push --schema=packages/db/prisma/schema.postgres.prisma --accept-data-loss
 
-DATABASE_URL="postgresql://…" HELM_QR_SECRET=… \
+DATABASE_URL="postgresql://…" HELM_QR_SECRET=… HELM_SESSION_SECRET=… \
   bun packages/db/seed.ts        # optionnel : données de démo
 ```
 
-### 2. Projet frontend (`apps/web`)
+### Mode B — deux projets (backend et frontend séparés)
 
-```bash
-# Vercel → New Project → Root Directory : apps/web (framework Next.js détecté)
-```
+Le backend tourne dans son propre déploiement (serverless Hono via
+`apps/api/api/index.ts` + rewrites) ; le frontend lui transfère `/api/*`
+(cookies de session identiques, aucun CORS). Il suffit de définir `API_ORIGIN`.
 
-| Variable | Valeur |
-|---|---|
-| `API_ORIGIN` | URL du projet API déployé (ex. `https://travelhelm-api.vercel.app`) |
+1. **Projet API** — Root Directory : `apps/api` (framework Other, détecté via
+   `api/index.ts` + `vercel.json`). Variables : `DATABASE_URL`, `HELM_QR_SECRET`,
+   `HELM_SESSION_SECRET`, `HELM_DEMO`. Initialiser le schéma comme en mode A.
+2. **Projet web** — Root Directory : `apps/web`. Variable : `API_ORIGIN`
+   (URL du projet API, ex. `https://travelhelm-api.vercel.app`).
 
-Le frontend proxifie `/api/*` vers `API_ORIGIN` (route runtime
-`src/app/api/[...path]/route.ts`) : cookies de session identiques, aucun CORS.
-
-### Ordre : déployer l'API d'abord, renseigner `API_ORIGIN` ensuite.
+Ordre : déployer l'API d'abord, renseigner `API_ORIGIN` ensuite.
 
 ### Dépannage : `error: Workspace dependency "@travelhelm/db" not found`
 
@@ -190,11 +198,18 @@ git check-ignore -v packages/db/package.json   # ne doit rien retourner
 git ls-files packages/db                        # doit lister 8 fichiers
 ```
 
+### Dépannage : `No Output Directory named "public" found`
+
+Le projet Vercel pointe sur la **racine du repo** (Root Directory vide). La
+corriger : Project Settings → General → Root Directory → `apps/web` (mode A)
+ou `apps/api` + `apps/web` (mode B).
+
 ### Alternatives d'hébergement
 
 > `apps/api` tourne aussi comme serveur Node standard
 > (`bun run build:api && node apps/api/dist/server.js`) — le bundle embarque le runtime
-> Prisma (Railway, Fly.io, VPS…).
+> Prisma (Railway, Fly.io, VPS…). Le web unifié fonctionne aussi en auto-hébergé :
+> `bun run build:web && node apps/web/.next/standalone/server.js`.
 
 ## Sécurité
 

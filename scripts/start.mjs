@@ -28,7 +28,11 @@ function start(name, cwd, command, args, color) {
 }
 
 start("api", `${ROOT}apps/api`, "node", ["dist/server.js"], "35");
-setTimeout(() => start("web", `${ROOT}apps/web/.next/standalone`, "node", ["server.js"], "36"), 500);
+setTimeout(() => {
+  // API_ORIGIN explicite → mode PROXY (split : api:4000 + web:3000).
+  process.env.API_ORIGIN = `http://localhost:${API_PORT}`;
+  start("web", `${ROOT}apps/web/.next/standalone`, "node", ["server.js"], "36");
+}, 500);
 
 function shutdown() {
   for (const p of procs) { try { p.kill("SIGTERM"); } catch {} }

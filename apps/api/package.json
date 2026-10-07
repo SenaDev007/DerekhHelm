@@ -5,6 +5,10 @@
   "description": "Travel Helm — backend REST versionné (Hono) : inventaire, réservations, paiements, billets, back-office multi-tenant.",
   "type": "module",
   "main": "./src/app.ts",
+  "types": "./src/app.ts",
+  "exports": {
+    ".": "./src/app.ts"
+  },
   "scripts": {
     "dev": "bun --watch src/server.ts",
     "build": "bun build src/server.ts --target=node --external @prisma/client --external .prisma/client --outfile dist/server.js && node scripts/copy-prisma-runtime.mjs",

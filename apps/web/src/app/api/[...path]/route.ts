@@ -1,14 +1,28 @@
-// Travel Helm (web) — proxy runtime vers le backend séparé (@travelhelm/api).
-// Toutes les requêtes /api/** du frontend sont transférées vers API_ORIGIN
-// (défaut : http://localhost:4000 en développement). Sur Vercel, définir
-// API_ORIGIN=https://<projet-api>.vercel.app. Les cookies de session back-office
-// transitent à l'identique : le frontend reste same-origin, sans CORS.
+// Travel Helm (web) — route API unique : deux modes de déploiement.
+//
+// 1. MODE UNIFIÉ (défaut, aucune variable à définir) : l'application Hono
+//    (@travelhelm/api) est montée directement dans le route handler Next.js.
+//    Un seul projet Vercel suffit (Root Directory : apps/web) — le frontend
+//    et le backend tournent dans la même fonction Node. Idéal pour démarrer.
+//
+// 2. MODE PROXY (API_ORIGIN défini) : toutes les requêtes /api/** sont
+//    transférées vers le backend séparé (apps/api déployé seul — Vercel,
+//    Railway, Fly.io…). Les cookies de session passent à l'identique,
+//    le frontend reste same-origin, sans CORS.
+//
+// Le choix est fait au démarrage : API_ORIGIN présent → proxy, sinon → unifié.
 import { NextRequest } from "next/server";
+import { app as helmApi } from "@travelhelm/api";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const API_ORIGIN = process.env.API_ORIGIN || "http://localhost:4000";
+const API_ORIGIN = process.env.API_ORIGIN || "";
+const useProxy = API_ORIGIN.length > 0;
+
+// Mode unifié : Hono route d'après l'URL complète (basePath /api) — app.fetch()
+// est l'API cœur de Hono (Request → Response), directement compatible Next.js.
+const unified = (req: Request) => helmApi.fetch(req);
 
 async function proxy(req: NextRequest, path: string) {
   const url = new URL(req.url);
@@ -58,23 +72,19 @@ async function proxy(req: NextRequest, path: string) {
   }
 }
 
-export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params;
-  return proxy(req, (path ?? []).join("/"));
+type Ctx = { params: Promise<{ path: string[] }> };
+
+async function dispatch(req: NextRequest, ctx: Ctx) {
+  if (useProxy) {
+    const { path } = await ctx.params;
+    return proxy(req, (path ?? []).join("/"));
+  }
+  // Mode unifié : Hono route d'après l'URL complète (basePath /api).
+  return unified(req);
 }
-export async function POST(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params;
-  return proxy(req, (path ?? []).join("/"));
-}
-export async function PATCH(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params;
-  return proxy(req, (path ?? []).join("/"));
-}
-export async function PUT(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params;
-  return proxy(req, (path ?? []).join("/"));
-}
-export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params;
-  return proxy(req, (path ?? []).join("/"));
-}
+
+export const GET = dispatch;
+export const POST = dispatch;
+export const PATCH = dispatch;
+export const PUT = dispatch;
+export const DELETE = dispatch;

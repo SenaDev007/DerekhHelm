@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build": "bun run --filter @travelhelm/api build && bun run --filter @travelhelm/web build",
+    "build": "node scripts/build.mjs",
     "build:web": "bun run --filter @travelhelm/web build",
     "build:api": "bun run --filter @travelhelm/api build",
     "start": "node scripts/start.mjs",

@@ -63,6 +63,9 @@ else start("api", `${ROOT}apps/api`, "npm", ["run", "dev", "-w", "apps/api"], "3
 
 // Léger délai pour que le backend soit joignable au premier rendu du proxy
 setTimeout(() => {
+  // API_ORIGIN explicite → mode PROXY (split dev : api:4000 + web:3000).
+  // Sans API_ORIGIN, la route /api monterait l'API dans Next (mode unifié).
+  process.env.API_ORIGIN = `http://localhost:${API_PORT}`;
   if (isBun) start("web", `${ROOT}apps/web`, "bun", ["run", "dev"], "36");
   else start("web", `${ROOT}apps/web`, "npm", ["run", "dev", "-w", "apps/web"], "36");
 }, 800);

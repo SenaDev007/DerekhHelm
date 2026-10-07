@@ -62,7 +62,8 @@
     "vaul": "^1.1.2",
     "zod": "^4.0.2",
     "zustand": "^5.0.6",
-    "@travelhelm/shared": "workspace:*"
+    "@travelhelm/shared": "workspace:*",
+    "@travelhelm/api": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
